@@ -10,13 +10,13 @@ port = 22
 username = ''
 password = ''
 
-with open('settings.json') as in_file:
-	login_creds = json.load(in_file)
-
-if login_creds is not None:
-	host = login_creds.get('host')
-	username = login_creds.get('username')
-	password = login_creds.get('password')
+if os.path.isfile('settings.json'):
+	with open('settings.json') as in_file:
+		login_creds = json.load(in_file)
+	if login_creds is not None:
+		host = login_creds.get('host')
+		username = login_creds.get('username')
+		password = login_creds.get('password')
 
 dialog_settings = ([{'key':'host', 'type':'text', 'value': host, 'title': 'Host'},
 									{'key':'username', 'type':'text', 'value': username, 'title':'User name: '}, 
