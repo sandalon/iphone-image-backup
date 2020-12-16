@@ -5,6 +5,7 @@ import os
 import json
 from objc_util import *
 
+# sftp client config
 host = ''
 port = 22
 username = ''
@@ -38,22 +39,50 @@ if not username or not password:
 with open('settings.json', 'w') as out_file:
 	json.dump(login_creds, out_file)
 
+# video handling setup
+# https://gist.github.com/jsbain/de01d929d3477a4c8e7ae9517d5b3d70
+
+options=ObjCClass('PHVideoRequestOptions').new()
+options.version=1	#PHVideoRequestOptionsVersionOriginal, use 0 for edited versions.
+image_manager=ObjCClass('PHImageManager').defaultManager()
+
+handled_assets=[]
+
+def handleAsset(_obj,asset, audioMix, info):
+	A=ObjCInstance(asset)
+	'''I am just appending to handled_assets to process later'''
+	handled_assets.append(A)
+	'''
+	# alternatively, handle inside handleAsset.  maybe need a threading.Lock here to ensure you are not sending storbinaries in parallel
+	with open(str(A.resolvedURL().resourceSpecifier()),'rb') as fp:
+		fro.storbinary(......)
+	'''
+handlerblock=ObjCBlock(handleAsset, argtypes=[c_void_p,]*4)
+	
+# do the actual work
+	
 transport = paramiko.Transport((host, port))
 transport.connect(username=username, password=password)
 sftp = paramiko.SFTPClient.from_transport(transport)
 
 images = photos.pick_asset(title='Content to backup', multi=True)
-if images is not None:
-	for img in images:
-		fileName = str(ObjCInstance(img).valueForKey_('filename'))
-		print ('copying ' + fileName)	
-		b = img.get_image_data().getvalue()
-		with open(fileName, mode='wb') as fil:
-			fil.write(b)
-			sftp.put(fileName, '/Personal/Photos/' + fileName)
-			os.remove(fileName) 
-			print ('done')	
-	sftp.close()
-	transport.close()
-	print ('transfer complete')
+for A in assets:
+	#these are PHAssets
+	image_manager.requestAVAssetForVideo(A, 
+						options=options, 
+						resultHandler=handlerblock)
+while len(handled_assets) < len(images):
+	'''wait for the asynchronous process to complete'''
+	time.sleep(1)
+
+for A in handled_assets:
+	with open(str(A.resolvedURL().resourceSpecifier()),'rb') as fp:
+		filename=str(A.URL()).split('/')[-1]
+		print ('copying ' + filename)	
+		sftp.putfo(remotepath='/Personal/Photos/' + filename, fl=fp)
+		print ('done')
+
+sftp.close()
+transport.close()
+print ('transfer complete')
 
