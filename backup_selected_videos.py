@@ -4,7 +4,6 @@ import dialogs
 import os
 import json
 from objc_util import *
-import io
 
 host = ''
 port = 22
@@ -48,18 +47,12 @@ if images is not None:
 	for img in images:
 		fileName = str(ObjCInstance(img).valueForKey_('filename'))
 		print ('copying ' + fileName)	
-		img_data = img.get_image()
-		sftp.putfo(fl=img_data, remotepath='/Personal/Photos/' + fileName, confirm=False)
-		
-		#b = img.get_image_data().getvalue()
-		
-		#img.save()
-		#with open(fileName, mode='wb') as fil:
-		#	fil.write(b)
-		#	sftp.put(fileName, '/Personal/Photos/' + fileName)
-		#	sftp.
-		#	os.remove(fileName) 
-		#	print ('done')	
+		b = img.get_image_data().getvalue()
+		with open(fileName, mode='wb') as fil:
+			fil.write(b)
+			sftp.put(fileName, '/Personal/Photos/' + fileName)
+			os.remove(fileName) 
+			print ('done')	
 	sftp.close()
 	transport.close()
 	print ('transfer complete')
