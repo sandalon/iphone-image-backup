@@ -3,6 +3,7 @@ import photos
 import dialogs
 import os
 import json
+import time
 from objc_util import *
 
 # sftp client config
@@ -66,7 +67,7 @@ transport.connect(username=username, password=password)
 sftp = paramiko.SFTPClient.from_transport(transport)
 
 images = photos.pick_asset(title='Content to backup', multi=True)
-for A in assets:
+for A in images:
 	#these are PHAssets
 	image_manager.requestAVAssetForVideo(A, 
 						options=options, 
